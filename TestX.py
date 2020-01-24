@@ -72,7 +72,25 @@ async def displayembed(ctx):
 async def on_reaction_add(reaction,user):
 	channel=reaction.message.channel
 	await channel.send('{} has added {} to the message {}'.format(user.name,reaction.emoji,reaction.message.content))
-
-
+@client.command()
+async def join(ctx):
+	if ctx.author.voice and ctx.author.voice.channel:
+		channel = ctx.author.voice.channel
+	else:
+		await ctx.send("You are not connected to a voice channel")
+		return
+	global vc
+	try:
+		vc=await channel.connect()
+	except:
+		TimeoutError
+@client.command()
+async def leave(ctx):
+	try:
+		if vc.is_connected():
+			await vc.disconnect()
+	except:
+		TimeoutError
+		pass
 client.loop.create_task(change_status())
 client.run(TOKEN)
