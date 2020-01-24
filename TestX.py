@@ -21,7 +21,6 @@ async def change_status():
 	await client.wait_until_ready()
 	statusx=cycle(status)
 	while not client.is_closed():
-		print("working")
 		current_status=next(statusx)
 		await client.change_presence(activity=discord.Game(name=current_status))
 		await asyncio.sleep(5)
@@ -41,7 +40,7 @@ async def ping(message):
 async def clean(ctx,amount=100):
 	messages=[]
 	channel=ctx.channel
-	async for message in channel.history(limit=int(amount)+1):
+	async for message in channel.history(limit=int(amount)):
 		messages.append(message)
 	await channel.delete_messages(messages)
 	await channel.send('Messages Deleted!')
@@ -69,6 +68,10 @@ async def displayembed(ctx):
 	embed.set_author(name="Author name",icon_url="https://i.imgur.com/07hQrmL.jpg")
 	embed.add_field(name="Field Name",value="field value",inline=True)
 	await ctx.channel.send(embed=embed)
+@client.event
+async def on_reaction_add(reaction,user):
+	channel=reaction.message.channel
+	await channel.send('{} has added {} to the message {}'.format(user.name,reaction.emoji,reaction.message.content))
 
 
 client.loop.create_task(change_status())
