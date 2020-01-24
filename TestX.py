@@ -13,6 +13,8 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 client = commands.Bot(command_prefix="!")
+client.remove_command('help')
+
 status=['crying','sobbing','weeping','yeeting']
 @client.event
 async def change_status():
@@ -23,7 +25,7 @@ async def change_status():
 		current_status=next(statusx)
 		await client.change_presence(activity=discord.Game(name=current_status))
 		await asyncio.sleep(5)
-		 
+ 		 
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
@@ -44,21 +46,30 @@ async def clean(ctx,amount=100):
 	await channel.delete_messages(messages)
 	await channel.send('Messages Deleted!')
 @client.command()
+async def help(ctx):
+	author=ctx.author
+	embed=discord.Embed(
+	description="This is the help you'll need",
+	colour=discord.Colour.blue()
+	)
+	embed.set_author(name='help')
+	embed.add_field(name=".ping ",value="Returns pong wont tell you how clean works",inline=False)
+	await ctx.channel.send(author,embed=embed)
+
+@client.command()
 async def displayembed(ctx):
 	embed=discord.Embed(
 	title="Title",
 	description="This is the description",
 	colour=discord.Colour.blue()
 	)
-
 	embed.set_footer(text="Here you go.")
 	embed.set_image(url="https://i.imgur.com/rqFMhSx.jpg")
 	embed.set_thumbnail(url="https://i.imgur.com/CndgMNn.jpg")
 	embed.set_author(name="Author name",icon_url="https://i.imgur.com/07hQrmL.jpg")
-
-	embed.add_field(name="Field Name",value="field value",inline=False)
 	embed.add_field(name="Field Name",value="field value",inline=True)
 	await ctx.channel.send(embed=embed)
+
 
 client.loop.create_task(change_status())
 client.run(TOKEN)
