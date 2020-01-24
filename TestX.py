@@ -43,5 +43,22 @@ async def clean(ctx,amount=100):
 		messages.append(message)
 	await channel.delete_messages(messages)
 	await channel.send('Messages Deleted!')
+@client.command()
+async def displayembed(ctx):
+	embed=discord.Embed(
+	title="Title",
+	description="This is the description",
+	colour=discord.Colour.blue()
+	)
+
+	embed.set_footer(text="Here you go.")
+	embed.set_image(url="https://i.imgur.com/rqFMhSx.jpg")
+	embed.set_thumbnail(url="https://i.imgur.com/CndgMNn.jpg")
+	embed.set_author(name="Author name",icon_url="https://i.imgur.com/07hQrmL.jpg")
+
+	embed.add_field(name="Field Name",value="field value",inline=False)
+	embed.add_field(name="Field Name",value="field value",inline=True)
+	await ctx.channel.send(embed=embed)
+
 client.loop.create_task(change_status())
 client.run(TOKEN)
