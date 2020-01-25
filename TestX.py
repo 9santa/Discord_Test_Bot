@@ -79,7 +79,11 @@ async def join(ctx):
 		await ctx.send("You are not connected to a voice channel")
 		return
 	global vc
-	vc=await channel.connect()
+	
+	try:
+		vc=await channel.connect()
+	except:
+		TimeoutError
 @client.command()
 async def leave(ctx):
 	try:
