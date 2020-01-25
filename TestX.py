@@ -1,9 +1,13 @@
 import discord
 from discord.ext import commands
+from discord.utils import get
 import logging
 import os
 import asyncio
 from itertools import cycle
+import youtube_dl
+
+players={}
 
 f = open('token.txt', 'r')
 TOKEN = f.read().replace('\n', '')
@@ -21,11 +25,9 @@ async def change_status():
 	await client.wait_until_ready()
 	statusx=cycle(status)
 	while not client.is_closed():
-		print("working")
 		current_status=next(statusx)
 		await client.change_presence(activity=discord.Game(name=current_status))
 		await asyncio.sleep(5)
- 		 
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
@@ -33,7 +35,6 @@ async def on_ready():
 async def on_member_join(member):
 	role=discord.utils.get(member.guild.roles,name="Hero")
 	await member.add_roles(role)
-
 @client.command()
 async def ping(message):
 	await message.channel.send("Pong!")
@@ -41,7 +42,7 @@ async def ping(message):
 async def clean(ctx,amount=100):
 	messages=[]
 	channel=ctx.channel
-	async for message in channel.history(limit=int(amount)+1):
+	async for message in channel.history(limit=int(amount)):
 		messages.append(message)
 	await channel.delete_messages(messages)
 	await channel.send('Messages Deleted!')
@@ -54,8 +55,8 @@ async def help(ctx):
 	)
 	embed.set_author(name='help')
 	embed.add_field(name=".ping ",value="Returns pong wont tell you how clean works",inline=False)
+	embed.add_field(name=".play",value="Play with !play (url) ",inline=False)
 	await ctx.channel.send(author,embed=embed)
-
 @client.command()
 async def displayembed(ctx):
 	embed=discord.Embed(
@@ -69,6 +70,78 @@ async def displayembed(ctx):
 	embed.set_author(name="Author name",icon_url="https://i.imgur.com/07hQrmL.jpg")
 	embed.add_field(name="Field Name",value="field value",inline=True)
 	await ctx.channel.send(embed=embed)
+@client.event
+async def on_reaction_add(reaction,user):
+	channel=reaction.message.channel
+	await channel.send('{} has added {} to the message {}'.format(user.name,reaction.emoji,reaction.message.content))
+@client.command()
+async def join(ctx):
+	if ctx.author.voice and ctx.author.voice.channel:
+		channel = ctx.author.voice.channel
+	else:
+		await ctx.send("You are not connected to a voice channel")
+		return
+	global vc
+	try:
+		vc=await channel.connect()
+	except:
+		TimeoutError
+@client.command()
+async def leave(ctx):
+	try:
+		if vc.is_connected():
+			await vc.disconnect()
+	except:
+		TimeoutError
+		pass
+@client.command()
+async def play(ctx,url):
+	if os.path.isfile("song.mp3"):
+		os.remove("song.mp3")
+	vc = ctx.voice_client
+	ydl_opts={
+	'format':'bestaudio/best',
+	'postprocessors': [{
+		'key':'FFmpegExtractAudio',
+		'preferredcodec': 'mp3',
+		'preferredquality':'192',
+
+	}],
+
+	}
+	with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+		print("downloading song")
+		ydl.download([url])
+	for file in os.listdir("./"):
+		if file.endswith(".mp3"):
+			name=file
+			print(f"Renamed file:{file}\n")
+			os.rename(file,"song.mp3")
+	vc.play(discord.FFmpegPCMAudio("song.mp3"))
+	vc.source=discord.PCMVolumeTransformer(vc.source)
+	vc.source.volume=0.07
+
+@client.command()
+async def pause(ctx):
+	if vc and vc.is_playing():
+		vc.pause()
+		await ctx.send("Paused!")
+	else:
+		await ctx.send("Music not playing!")
+@client.command()
+async def resume(ctx):
+	if vc and vc.is_paused():
+		vc.resume()
+		await ctx.send("Music Resumed!")
+	else:
+		await ctx.send("Music not paused")
+@client.command()
+async def stop(ctx):
+	if vc and vc.is_playing:
+		vc.stop()
+		await ctx.send("Stopped")
+	else:
+		await ctx.send("Music not playing!")
 
 
 client.loop.create_task(change_status())
