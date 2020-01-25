@@ -54,7 +54,6 @@ async def help(ctx):
 	embed.set_author(name='help')
 	embed.add_field(name=".ping ",value="Returns pong wont tell you how clean works",inline=False)
 	await ctx.channel.send(author,embed=embed)
-
 @client.command()
 async def displayembed(ctx):
 	embed=discord.Embed(
@@ -80,6 +79,7 @@ async def join(ctx):
 		await ctx.send("You are not connected to a voice channel")
 		return
 	global vc
+	
 	try:
 		vc=await channel.connect()
 	except:
