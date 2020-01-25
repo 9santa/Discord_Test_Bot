@@ -6,6 +6,8 @@ import os
 import asyncio
 from itertools import cycle
 import youtube_dl
+import shutil
+
 
 players={}
 
@@ -96,8 +98,46 @@ async def leave(ctx):
 		pass
 @client.command()
 async def play(ctx,url):
+	def check_queue():
+		Queue_infile=os.path.isdir("./Queue")
+		if Queue_infile is True:
+			DIR=os.path.abspath(os.path.realpath("Queue"))
+			length=len(os.listdir(DIR))
+			still_q=length-1
+			try:
+				first_file=os.listdir(DIR)[0]
+			except:
+				print("No more songs")
+				queues.clear()
+				return
+			main_location= os.path.dirname(os.path.realpath(__file__))
+			song_path=os.path.abspath(os.path.realpath("Queue")+"\\"+first_file)
+			if length!=0:
+				print("Playing next song")
+				print(f"Songs in queue:{still_q}")
+				song_there=os.path.isfile("song.mp3")
+				if song_there:
+					os.remove("song.mp3")
+				shutil.move(song_path,main_location)
+				for file in os.listdir("./"):
+					if file.endswith(".mp3"):
+						os.rename(file,"song.mp3")
+				vc.play(discord.FFmpegPCMAudio("song.mp3"),after=lambda e: check_queue())
+				vc.source=discord.PCMVolumeTransformer(vc.source)
+				vc.source.volume=0.07
+			else:
+				queues.clear()
+				return
+		else:
+			queues.clear()
+			print("No song")
 	if os.path.isfile("song.mp3"):
 		os.remove("song.mp3")
+		queues.clear()
+	if os.path.isfile("./Queue") is True:
+		shutil.rmtree("./Queue")
+
+
 	vc = ctx.voice_client
 	ydl_opts={
 	'format':'bestaudio/best',
@@ -115,9 +155,9 @@ async def play(ctx,url):
 	for file in os.listdir("./"):
 		if file.endswith(".mp3"):
 			name=file
-			print(f"Renamed file:{file}\n")
+			#print(f"Renamed file:{file}\n")
 			os.rename(file,"song.mp3")
-	vc.play(discord.FFmpegPCMAudio("song.mp3"))
+	vc.play(discord.FFmpegPCMAudio("song.mp3"),after=lambda e: check_queue())
 	vc.source=discord.PCMVolumeTransformer(vc.source)
 	vc.source.volume=0.07
 
@@ -137,11 +177,46 @@ async def resume(ctx):
 		await ctx.send("Music not paused")
 @client.command()
 async def stop(ctx):
+	queues.clear()
 	if vc and vc.is_playing:
 		vc.stop()
 		await ctx.send("Stopped")
 	else:
 		await ctx.send("Music not playing!")
+queues={}
+
+@client.command()
+async def queue(ctx,url):
+	Queue_infile=os.path.isdir("./Queue")
+	if Queue_infile is False:
+		os.mkdir("Queue")
+	DIR=os.path.abspath(os.path.realpath("Queue"))
+	q_num=len(os.listdir(DIR))
+	q_num+=1
+	add_queue=True
+	while add_queue:
+		if q_num in queues:
+			q_num+=1
+		else:
+			add_queue = False
+			queues[q_num]=q_num
+	queue_path=os.path.abspath(os.path.realpath("./Queue")+f"\song{q_num}.%(ext)s")
+	ydl_opts={
+	'format':'bestaudio/best',
+	'outtmpl':queue_path,
+	'postprocessors': [{
+		'key':'FFmpegExtractAudio',
+		'preferredcodec': 'mp3',
+		'preferredquality':'192',
+
+	}],
+
+	}
+	with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+		print("downloading song")
+		ydl.download([url])
+	await ctx.send("Added to queue at no."+str(q_num))
+
 
 
 client.loop.create_task(change_status())
