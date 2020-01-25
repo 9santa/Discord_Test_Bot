@@ -9,7 +9,6 @@ import youtube_dl
 
 players={}
 
-
 f = open('token.txt', 'r')
 TOKEN = f.read().replace('\n', '')
 logger = logging.getLogger('discord')
@@ -121,6 +120,29 @@ async def play(ctx,url):
 	vc.play(discord.FFmpegPCMAudio("song.mp3"))
 	vc.source=discord.PCMVolumeTransformer(vc.source)
 	vc.source.volume=0.07
+
+@client.command()
+async def pause(ctx):
+	if vc and vc.is_playing():
+		vc.pause()
+		await ctx.send("Paused!")
+	else:
+		await ctx.send("Music not playing!")
+@client.command()
+async def resume(ctx):
+	if vc and vc.is_paused():
+		vc.resume()
+		await ctx.send("Music Resumed!")
+	else:
+		await ctx.send("Music not paused")
+@client.command()
+async def stop(ctx):
+	if vc and vc.is_playing:
+		vc.stop()
+		await ctx.send("Stopped")
+	else:
+		await ctx.send("Music not playing!")
+
 
 client.loop.create_task(change_status())
 client.run(TOKEN)
