@@ -151,13 +151,25 @@ async def play(ctx,url):
 	}
 	with youtube_dl.YoutubeDL(ydl_opts) as ydl:
 		print("downloading song")
-		ydl.download([url])
+		try:
+			ydl.download([url])
+		except:
+			ctx.send("Error downloading invalid url")
+	if os.path.isfile("song.mp3"):
+		os.remove("song.mp3")
 	for file in os.listdir("./"):
+
 		if file.endswith(".mp3"):
 			name=file
 			#print(f"Renamed file:{file}\n")
-			os.rename(file,"song.mp3")
-	vc.play(discord.FFmpegPCMAudio("song.mp3"),after=lambda e: check_queue())
+			try:
+				os.rename(file,"song.mp3")
+			except:
+				pass
+	try:
+		vc.play(discord.FFmpegPCMAudio("song.mp3"),after=lambda e: check_queue())
+	except:
+		ctx.send("The bot may not be in voice channel")
 	vc.source=discord.PCMVolumeTransformer(vc.source)
 	vc.source.volume=0.07
 
