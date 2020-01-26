@@ -145,7 +145,6 @@ async def play(ctx,url):
 		'preferredquality':'192',
 
 	}],
-
 	}
 	with youtube_dl.YoutubeDL(ydl_opts) as ydl:
 		print("downloading song")
@@ -235,10 +234,23 @@ async def queue(ctx,url):
 @commands.has_role('admin')
 async def kick(ctx,member: discord.Member,*,reason="none"):
 	await member.kick(reason=reason)
+	await ctx.send(f"Kicked!{user.mention}")
 @client.command()
 @commands.has_role('admin')
 async def ban(ctx,member : discord.Member,*,reason="none"):
 	await member.ban(reason=reason)
-
+	await ctx.send(f"Banned! {user.mention}")
+@client.command()
+@client.has_role('admin')
+#we need user#123 member format as they are not in server
+async def unban(ctx,*,member): 						
+	banned_users= await ctx.guild.bans()
+	member_name,member_discriminator=member.split('#')
+	for ban_entry in banned_users:
+		user=ban_entry.user
+		if(user.name,user.discriminator)==(member_name,member_discriminator):
+			await ctx.guild.unban(user)
+			await ctx.send(f"Unbanned {user.mention}")
+			return
 client.loop.create_task(change_status())
 client.run(TOKEN)
