@@ -7,8 +7,6 @@ import asyncio
 from itertools import cycle
 import youtube_dl
 import shutil
-
-
 players={}
 
 f = open('token.txt', 'r')
@@ -233,7 +231,12 @@ async def queue(ctx,url):
 		ydl.download([url])
 	await ctx.send("Added to queue at no."+str(q_num))
 
-
+@client.command()
+async def kick(ctx,member: discord.Member,*,reason=none):
+	await member.kick(reason=reason)
+@client.command()
+async def ban(ctx,member : discord.Member,*,reason=None):
+	await member.ban(reason=reason)
 
 client.loop.create_task(change_status())
 client.run(TOKEN)
