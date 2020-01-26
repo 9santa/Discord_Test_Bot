@@ -233,11 +233,11 @@ async def queue(ctx,url):
 
 @client.command()
 @commands.has_role('admin')
-async def kick(ctx,member: discord.Member,*,reason=none):
+async def kick(ctx,member: discord.Member,*,reason="none"):
 	await member.kick(reason=reason)
 @client.command()
 @commands.has_role('admin')
-async def ban(ctx,member : discord.Member,*,reason=None):
+async def ban(ctx,member : discord.Member,*,reason="none"):
 	await member.ban(reason=reason)
 
 client.loop.create_task(change_status())
