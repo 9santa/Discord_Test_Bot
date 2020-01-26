@@ -232,9 +232,11 @@ async def queue(ctx,url):
 	await ctx.send("Added to queue at no."+str(q_num))
 
 @client.command()
+@commands.has_role('admin')
 async def kick(ctx,member: discord.Member,*,reason=none):
 	await member.kick(reason=reason)
 @client.command()
+@commands.has_role('admin')
 async def ban(ctx,member : discord.Member,*,reason=None):
 	await member.ban(reason=reason)
 
