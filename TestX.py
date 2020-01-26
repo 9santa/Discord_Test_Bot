@@ -241,7 +241,7 @@ async def ban(ctx,member : discord.Member,*,reason="none"):
 	await member.ban(reason=reason)
 	await ctx.send(f"Banned! {user.mention}")
 @client.command()
-@client.has_role('admin')
+@commands.has_role('admin')
 #we need user#123 member format as they are not in server
 async def unban(ctx,*,member): 						
 	banned_users= await ctx.guild.bans()
@@ -252,5 +252,16 @@ async def unban(ctx,*,member):
 			await ctx.guild.unban(user)
 			await ctx.send(f"Unbanned {user.mention}")
 			return
+
+@client.command
+async def load(ctx,extension):
+	client.load_extension(f"cogs.{extension}")
+@client.command
+async def unload(ctx,extension):
+	client.unload_extension(f"cogs.{extension}")
+for filename in os.listdir("./cogs"):
+	if filename.endswith(".py"):
+		client.load_extension(f"cogs.{filename[:-3]}")
+
 client.loop.create_task(change_status())
 client.run(TOKEN)
