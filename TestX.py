@@ -190,6 +190,10 @@ async def resume(ctx):
 @client.command()
 async def stop(ctx):
 	queues.clear()
+	queue_infile=os.path.isdir("./Queue")
+	if queue_infile is True:
+		shutil.rmtree("./Queue")
+
 	if vc and vc.is_playing:
 		vc.stop()
 		await ctx.send("Stopped")
