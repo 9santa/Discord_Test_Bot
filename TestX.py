@@ -20,14 +20,14 @@ client = commands.Bot(command_prefix="!")
 client.remove_command('help')
 
 status=['crying','sobbing','weeping','yeeting']
-@client.event
+'''@client.event
 async def change_status():
 	await client.wait_until_ready()
 	statusx=cycle(status)
 	while not client.is_closed():
 		current_status=next(statusx)
 		await client.change_presence(activity=discord.Game(name=current_status))
-		await asyncio.sleep(5)
+		await asyncio.sleep(5)'''
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
@@ -135,7 +135,6 @@ async def play(ctx,url):
 	if os.path.isfile("./Queue") is True:
 		shutil.rmtree("./Queue")
 
-
 	vc = ctx.voice_client
 	ydl_opts={
 	'format':'bestaudio/best',
@@ -151,7 +150,7 @@ async def play(ctx,url):
 		try:
 			ydl.download([url])
 		except:
-			ctx.send("Error downloading invalid url")
+			await ctx.send("Error downloading invalid url")
 	if os.path.isfile("song.mp3"):
 		os.remove("song.mp3")
 	for file in os.listdir("./"):
@@ -167,8 +166,11 @@ async def play(ctx,url):
 		vc.play(discord.FFmpegPCMAudio("song.mp3"),after=lambda e: check_queue())
 	except:
 		ctx.send("The bot may not be in voice channel")
-	vc.source=discord.PCMVolumeTransformer(vc.source)
-	vc.source.volume=0.07
+	try:
+		vc.source=discord.PCMVolumeTransformer(vc.source)
+		vc.source.volume=0.07
+	except:
+		AttributeError
 
 @client.command()
 async def pause(ctx):
@@ -186,6 +188,7 @@ async def resume(ctx):
 		await ctx.send("Music not paused")
 @client.command()
 async def stop(ctx):
+	vc= get(client.voice_clients,guild=ctx.guild)
 	queues.clear()
 	queue_infile=os.path.isdir("./Queue")
 	if queue_infile is True:
@@ -197,39 +200,48 @@ async def stop(ctx):
 	else:
 		await ctx.send("Music not playing!")
 queues={}
+@client.command()
+async def next(ctx):
+	vc=get(client.voice_clients,guild=ctx.guild)
+	if vc and vc.is_playing:
+		print("Playing next")
+		vc.stop()
+		await ctx.send("Playing Next Song!")
 
 @client.command()
 async def queue(ctx,url):
-	Queue_infile=os.path.isdir("./Queue")
-	if Queue_infile is False:
-		os.mkdir("Queue")
-	DIR=os.path.abspath(os.path.realpath("Queue"))
-	q_num=len(os.listdir(DIR))
-	q_num+=1
-	add_queue=True
-	while add_queue:
-		if q_num in queues:
-			q_num+=1
-		else:
-			add_queue = False
-			queues[q_num]=q_num
-	queue_path=os.path.abspath(os.path.realpath("./Queue")+f"\song{q_num}.%(ext)s")
-	ydl_opts={
-	'format':'bestaudio/best',
-	'outtmpl':queue_path,
-	'postprocessors': [{
-		'key':'FFmpegExtractAudio',
-		'preferredcodec': 'mp3',
-		'preferredquality':'192',
+	try:
+		Queue_infile=os.path.isdir("./Queue")
+		if Queue_infile is False:
+			os.mkdir("Queue")
+		DIR=os.path.abspath(os.path.realpath("Queue"))
+		q_num=len(os.listdir(DIR))
+		q_num+=1
+		add_queue=True
+		while add_queue:
+			if q_num in queues:
+				q_num+=1
+			else:
+				add_queue = False
+				queues[q_num]=q_num
+		queue_path=os.path.abspath(os.path.realpath("./Queue")+f"\song{q_num}.%(ext)s")
+		ydl_opts={
+		'format':'bestaudio/best',
+		'outtmpl':queue_path,
+		'postprocessors': [{
+			'key':'FFmpegExtractAudio',
+			'preferredcodec': 'mp3',
+			'preferredquality':'192',
 
-	}],
+		}],
 
-	}
-	with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-		print("downloading song")
-		ydl.download([url])
-	await ctx.send("Added to queue at no."+str(q_num))
-
+		}
+		with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+			print("downloading song")
+			ydl.download([url])
+		await ctx.send("Added to queue at no."+str(q_num))
+	except:
+		pass
 @client.command()
 @commands.has_role('admin')
 async def kick(ctx,member: discord.Member,*,reason="none"):
@@ -263,5 +275,5 @@ for filename in os.listdir("./cogs"):
 	if filename.endswith(".py"):
 		client.load_extension(f"cogs.{filename[:-3]}")
 
-client.loop.create_task(change_status())
+#client.loop.create_task(change_status())
 client.run(TOKEN)
