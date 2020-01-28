@@ -6,7 +6,7 @@ import os
 import asyncio
 from itertools import cycle
 import youtube_dl
-
+import shutil
 players={}
 
 f = open('token.txt', 'r')
@@ -20,14 +20,14 @@ client = commands.Bot(command_prefix="!")
 client.remove_command('help')
 
 status=['crying','sobbing','weeping','yeeting']
-@client.event
+'''@client.event
 async def change_status():
 	await client.wait_until_ready()
 	statusx=cycle(status)
 	while not client.is_closed():
 		current_status=next(statusx)
 		await client.change_presence(activity=discord.Game(name=current_status))
-		await asyncio.sleep(5)
+		await asyncio.sleep(5'''
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
@@ -75,74 +75,31 @@ async def on_reaction_add(reaction,user):
 	channel=reaction.message.channel
 	await channel.send('{} has added {} to the message {}'.format(user.name,reaction.emoji,reaction.message.content))
 @client.command()
-async def join(ctx):
-	if ctx.author.voice and ctx.author.voice.channel:
-		channel = ctx.author.voice.channel
-	else:
-		await ctx.send("You are not connected to a voice channel")
-		return
-	global vc
-	try:
-		vc=await channel.connect()
-	except:
-		TimeoutError
+@commands.has_role('admin')
+async def kick(ctx,member: discord.Member,*,reason="none"):
+	await member.kick(reason=reason)
+	await ctx.send(f"Kicked!{user.mention}")
 @client.command()
-async def leave(ctx):
-	try:
-		if vc.is_connected():
-			await vc.disconnect()
-	except:
-		TimeoutError
-		pass
+@commands.has_role('admin')
+async def ban(ctx,member : discord.Member,*,reason="none"):
+	await member.ban(reason=reason)
+	await ctx.send(f"Banned! {user.mention}")
 @client.command()
-async def play(ctx,url):
-	if os.path.isfile("song.mp3"):
-		os.remove("song.mp3")
-	vc = ctx.voice_client
-	ydl_opts={
-	'format':'bestaudio/best',
-	'postprocessors': [{
-		'key':'FFmpegExtractAudio',
-		'preferredcodec': 'mp3',
-		'preferredquality':'192',
+@commands.has_role('admin')
+#we need user#123 member format as they are not in server
+async def unban(ctx,*,member): 						
+	banned_users= await ctx.guild.bans()
+	member_name,member_discriminator=member.split('#')
+	for ban_entry in banned_users:
+		user=ban_entry.user
+		if(user.name,user.discriminator)==(member_name,member_discriminator):
+			await ctx.guild.unban(user)
+			await ctx.send(f"Unbanned {user.mention}")
+			return
 
-	}],
+for filename in os.listdir("./"):
+	if filename.endswith(".py") and filename!="TestX.py":
+		client.load_extension(f"{filename[:-3]}")
 
-	}
-	with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-		print("downloading song")
-		ydl.download([url])
-	for file in os.listdir("./"):
-		if file.endswith(".mp3"):
-			name=file
-			print(f"Renamed file:{file}\n")
-			os.rename(file,"song.mp3")
-	vc.play(discord.FFmpegPCMAudio("song.mp3"))
-	vc.source=discord.PCMVolumeTransformer(vc.source)
-	vc.source.volume=0.07
-
-@client.command()
-async def pause(ctx):
-	if vc and vc.is_playing():
-		vc.pause()
-		await ctx.send("Paused!")
-	else:
-		await ctx.send("Music not playing!")
-@client.command()
-async def resume(ctx):
-	if vc and vc.is_paused():
-		vc.resume()
-		await ctx.send("Music Resumed!")
-	else:
-		await ctx.send("Music not paused")
-@client.command()
-async def stop(ctx):
-	if vc and vc.is_playing:
-		vc.stop()
-		await ctx.send("Stopped")
-	else:
-		await ctx.send("Music not playing!")
-
-
-client.loop.create_task(change_status())
+#client.loop.create_task(change_status())
 client.run(TOKEN)
