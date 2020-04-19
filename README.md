@@ -1,4 +1,4 @@
-# Discort Test Bot
+# Discord Test Bot
 
 ## Get a bot token from Discord
 https://www.writebots.com/discord-bot-token/
